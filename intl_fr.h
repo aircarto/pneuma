@@ -154,5 +154,5 @@ const char INTL_ACTIVATION[] = "Activation";
 const char INTL_PROBES[] = "des sondes";
 
 #include "./aircarto-logo-common.h"
-#include "./logos-custom.h"
+#include "./sprites.h"
 

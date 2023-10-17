@@ -212,10 +212,6 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 uint8_t display_draw_time = 30; //10-50 is usually fine
 PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
 
-uint8_t logos[6] = {0, 0, 0, 0, 0, 0};
-uint8_t logo_index = -1;
-bool has_logo;
-
 extern const uint8_t gamma8[]; //for gamma correction
 
 struct RGB
@@ -283,6 +279,20 @@ void drawImage(int x, int y, int h, int w, uint16_t image[])
 	}
 }
 
+void drawRandomPixel(int x, int y, int h, int w)
+{
+	int imageHeight = h;
+	int imageWidth = w;
+	int counter = 0;
+	for (int yy = 0; yy < imageHeight; yy++)
+	{
+		for (int xx = 0; xx < imageWidth; xx++)
+		{
+			display.drawPixel(xx + x, yy + y, rand() % 65536);
+		}
+	}
+}
+
 bool gamma_correction = true; //Gamma correction
 
 void drawCentreString(const String &buf, int x, int y, int offset)
@@ -293,7 +303,6 @@ void drawCentreString(const String &buf, int x, int y, int offset)
 	display.setCursor(((64 - offset) - w) / 2, y);		//si 1 seul chiffre => taille de 2 chiffres !!!
 	display.print(buf);
 }
-
 
 /*****************************************************************
  * Serial declarations                                           *
@@ -320,6 +329,7 @@ bool send_now = false;
 unsigned long starttime;
 unsigned long time_end_setup;
 unsigned long time_before_config;
+unsigned long time_animation;
 int prec;
 unsigned long time_point_device_start_ms;
 unsigned long starttime_MHZ16;
@@ -972,14 +982,6 @@ static void webserver_config_send_body_get(String &page_content)
 	// // Paginate page after ~ 1500 Bytes
 	server.sendContent(page_content);
 	page_content = emptyString;
-
-	page_content += FPSTR(WEB_BR_LF_B);
-	page_content += FPSTR(INTL_VOC_SENSORS);
-	page_content += FPSTR(WEB_B_BR);
-
-	// Paginate page after ~ 1500 Bytes
-	server.sendContent(page_content);
-	//page_content = emptyString;
 
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(4));
 
@@ -1790,36 +1792,6 @@ static void wifiConfig()
 
 	if (cfg::has_matrix)
 	{
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL);
-		display.setTextSize(1);
-		display.setCursor(1, 0);
-		display.print(INTL_CONFIGURE);
-		display.setCursor(1, 11);
-		display.print(INTL_THE_WIFI);
-		display.setCursor(1, 22);
-		display.print("3 min.");
-
-		for (int i = 0; i < 5; i++)
-		{
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop1);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop2);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop3);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop4);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop5);
-			delay(200);
-		}
-		display.fillScreen(myBLACK);
 		display_update_enable(false);
 	}
 
@@ -1880,112 +1852,12 @@ static void wifiConfig()
 	// 10 minutes timeout for wifi config
 	last_page_load = millis();
 
-	if (cfg::has_matrix)
-	{
-		display_update_enable(true); //reactivate matrix during the X min config time  ATTENTION ICI true/false?
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL);
-		display.setTextSize(1);
-		display.setCursor(1, 0);
-		display.print(INTL_CONFIGURE);
-		display.setCursor(1, 11);
-		display.print(INTL_THE_WIFI);
-		display.setCursor(1, 22);
-		display.print("3 min.");
-		for (int i = 0; i < 5; i++)
-		{
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop1);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop2);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop3);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop4);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop5);
-			delay(200);
-		}
-		time_before_config = millis();
-	}
 
 	while ((millis() - last_page_load) < cfg::time_for_wifi_config + 500)
 	{
 		dnsServer.processNextRequest();
 		server.handleClient();
-		yield();	
-
-		
-		int div_entiere = (millis() - time_before_config) / 200;
-
-		if (prec != div_entiere){display.fillRect(47, 15, 16, 16, myBLACK);}
-
-			switch (div_entiere)
-			{
-			case 0:
-				drawImage(47, 15, 16, 16, wifiloop1);
-				prec = div_entiere;
-				break;
-			case 1:
-				drawImage(47, 15, 16, 16, wifiloop2);
-				prec = div_entiere;
-				break;
-			case 2:
-				drawImage(47, 15, 16, 16, wifiloop3);
-				prec = div_entiere;
-				break;
-			case 3:
-				drawImage(47, 15, 16, 16, wifiloop4);
-				prec = div_entiere;
-				break;
-			case 4:
-				drawImage(47, 15, 16, 16, wifiloop5);
-				prec = div_entiere;
-				break;
-			case 5:
-				time_before_config = millis();
-				prec = div_entiere;
-				break;
-			}
-	}
-
-	if (cfg::has_matrix)
-	{
-		display_update_enable(true);
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL); //&Font4x5Fixed
-		display.setTextSize(1);
-		display.setCursor(1, 0);
-		display.print(INTL_CONFIGURE);
-		display.setCursor(1, 11);
-		display.print(INTL_THE_WIFI);
-		display.setCursor(1, 22);
-		display.print("3 min.");
-		for (int i = 0; i < 5; i++)
-		{
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop1);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop2);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop3);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop4);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop5);
-			delay(200);
-		}
-		display.fillScreen(myBLACK);
+		yield();
 	}
 
 	WiFi.softAPdisconnect(true);
@@ -2035,33 +1907,6 @@ static void connectWifi()
 {
 	if (cfg::has_matrix)
 	{
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL);
-		display.setTextSize(1);
-		display.setCursor(1, 0);
-		display.print(INTL_CONNECTION);
-		display.setCursor(1, 11);
-		display.print(INTL_TRY);
-		for (int i = 0; i < 5; i++)
-		{
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop1);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop2);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop3);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop4);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop5);
-			delay(200);
-		}
-		display.fillScreen(myBLACK);
 		display_update_enable(false);
 	}
 
@@ -2128,36 +1973,6 @@ static void connectWifi()
 		if (cfg::has_matrix)
 		{
 			display_update_enable(true);
-			// drawImage(36, 6, 20, 27, wifiblue);
-		// 	display.setTextColor(myWHITE);
-		// 	display.setFont(NULL);
-		// 	display.setTextSize(1);
-		// 	display.setCursor(1, 0);
-		// 	display.print("Configurer");
-		// 	display.setCursor(1, 11);
-		// 	display.print("le WiFi");
-		// 	display.setCursor(1, 22);
-		// 	display.print("3 min.");
-			
-		// 	for (int i = 0; i < 5; i++)
-		// 		{
-		// 			display.fillRect(47, 15, 16, 16, myBLACK);
-		// 			drawImage(47, 15, 16, 16, wifiloop1);
-		// 			delay(200);
-		// 			display.fillRect(47, 15, 16, 16, myBLACK);
-		// 			drawImage(47, 15, 16, 16, wifiloop2);
-		// 			delay(200);
-		// 			display.fillRect(47, 15, 16, 16, myBLACK);
-		// 			drawImage(47, 15, 16, 16, wifiloop3);
-		// 			delay(200);
-		// 			display.fillRect(47, 15, 16, 16, myBLACK);
-		// 			drawImage(47, 15, 16, 16, wifiloop4);
-		// 			delay(200);
-		// 			display.fillRect(47, 15, 16, 16, myBLACK);
-		// 			drawImage(47, 15, 16, 16, wifiloop5);
-		// 			delay(200);
-		// 		}
-		// display.fillScreen(myBLACK);
 		}
 		wifiConfig();
 	}
@@ -2178,101 +1993,6 @@ static void connectWifi()
 	if (cfg::has_matrix)
 	{
 		display_update_enable(true); //reactivate matrix
-
-		if (calcWiFiSignalQuality(last_signal_strength) == 0)
-		{
-			display.fillScreen(myBLACK);
-			display.setTextColor(myWHITE);
-			display.setFont(NULL);
-			display.setTextSize(1);
-			display.setCursor(1, 0);
-			display.print(INTL_CONFIGURE);
-			display.setCursor(1, 11);
-			display.print(INTL_THE_WIFI);
-			display.setCursor(1, 22);
-			display.print("3 min.");
-			for (int i = 0; i < 5; i++)
-			{
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop1);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop2);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop3);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop4);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop5);
-				delay(200);
-			}
-			display.fillScreen(myBLACK);
-		}
-		else
-		{
-			// if (calcWiFiSignalQuality(last_signal_strength) > 0 && calcWiFiSignalQuality(last_signal_strength) < 25)
-			// {
-			// 	drawImage(36, 6, 20, 27, wifired);
-			// }
-
-			// if (calcWiFiSignalQuality(last_signal_strength) >= 25 && calcWiFiSignalQuality(last_signal_strength) < 50)
-			// {
-			// 	drawImage(36, 6, 20, 27, wifiorange);
-			// }
-
-			// if (calcWiFiSignalQuality(last_signal_strength) >= 50 && calcWiFiSignalQuality(last_signal_strength) < 75)
-			// {
-			// 	drawImage(36, 6, 20, 27, wifiyellow);
-			// }
-
-			// if (calcWiFiSignalQuality(last_signal_strength) >= 75 && calcWiFiSignalQuality(last_signal_strength) <= 100)
-			// {
-			// 	drawImage(36, 6, 20, 27, wifigreen);
-			// }
-
-			//String(calcWiFiSignalQuality(WiFi.RSSI()))
-
-			display.fillScreen(myBLACK);
-			display.setTextColor(myWHITE);
-			display.setFont(NULL);
-			display.setTextSize(1);
-			display.setCursor(1, 0);
-			display.print(INTL_CONNECTION);
-			display.setCursor(1, 11);
-			#if defined(INTL_EN)
-			display.print(INTL_DONE);
-			#endif
-			#if defined(INTL_FR)
-			display.write(130);
-			display.print("tablie");
-			#endif
-			display.setCursor(1, 22);
-			display.print(String(calcWiFiSignalQuality(WiFi.RSSI())));
-			display.print("%");
-
-			for (int i = 0; i < 5; i++)
-			{
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop1);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop2);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop3);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop4);
-				delay(200);
-				display.fillRect(47, 15, 16, 16, myBLACK);
-				drawImage(47, 15, 16, 16, wifiloop5);
-				delay(200);
-			}
-			display.fillScreen(myBLACK);
-		}
 	}
 }
 
@@ -2662,150 +2382,319 @@ static void fetchSensorMHZ19(String &s)
 	debug_outln_verbose(FPSTR(DBG_TXT_END_READING), FPSTR(sensor_name));
 }
 
+// static void display_values_matrix()
+// {
+// 	float t_value = -128.0;
+// 	float h_value = -1.0;
+// 	float p_value = -1.0;
+// 	String t_sensor, h_sensor, p_sensor;
+
+// 	String co2_sensor;
+
+// 	float co2_value = -1.0;
+// 	double alt_value = -1000.0;
+// 	uint8_t screen_count = 0;
+// 	uint8_t screens[5];
+// 	int line_count = 0;
+// 	//debug_outln_info(F("output values to matrix..."));
+
+// 	if (cfg::mhz16_read)
+// 	{
+// 		co2_value = last_value_MHZ16;
+// 		co2_sensor = FPSTR(SENSORS_MHZ16);
+// 	}
+
+// 	if (cfg::mhz19_read)
+// 	{
+// 		co2_value = last_value_MHZ19;
+// 		co2_sensor = FPSTR(SENSORS_MHZ19);
+// 	}
+
+// 	if (cfg::mhz16_read && cfg::display_measure)
+// 	{
+// 		if (cfg_screen_co2)
+// 			screens[screen_count++] = 0;
+// 	}
+// 	if (cfg::mhz19_read && cfg::display_measure)
+// 	{
+// 		if (cfg_screen_co2)
+// 			screens[screen_count++] = 1;
+// 	}
+
+// 	if (cfg::display_wifi_info && cfg::has_wifi)
+// 	{
+// 		screens[screen_count++] = 2; // Wifi info
+// 	}
+// 	if (cfg::display_device_info)
+// 	{
+// 		screens[screen_count++] = 3; // chipID, firmware and count of measurements
+// 		screens[screen_count++] = 4; // Latitude, longitude, altitude
+// 	}
+
+// 	switch (screens[next_display_count % screen_count])
+// 	{
+// 	case 0:
+// 		if (co2_value != -1.0)
+// 		{
+// 			if (co2_value < 800)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 			if (co2_value >= 800 && co2_value < 1500)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 			if (co2_value >= 1500)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 		}
+// 		else
+// 		{
+// 			act_milli += 5000;
+// 		}
+// 		break;
+// 	case 1:
+// 		if (co2_value != -1.0)
+// 		{
+// 			if (co2_value < 800)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 			if (co2_value >= 800 && co2_value < 1500)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 			if (co2_value >= 1500)
+// 			{
+// 				for (int i = 0; i < 5; i++)
+// 				{
+// 					drawImage(0, 0, 64, 64, sprite0);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite1);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite2);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite3);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite4);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite5);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite6);
+// 					delay(200);
+// 					drawImage(0, 0, 64, 64, sprite7);
+// 					delay(200);
+// 				}
+// 			}
+// 		}
+// 		else
+// 		{
+// 			act_milli += 5000;
+// 		}
+// 		break;
+// 	case 2:
+// 		display.fillScreen(myBLACK);
+// 		display.setTextColor(myWHITE);
+// 		display.setFont(&Font4x5Fixed);
+// 		display.setTextSize(1);
+// 		display.setCursor(0, 4);
+// 		display.print("Wifi Info");
+// 		display.setCursor(0, 10);
+// 		display.print("IP:");
+// 		display.print(WiFi.localIP().toString());
+// 		display.setCursor(0, 16);
+// 		display.print("SSID:");
+// 		display.print(WiFi.SSID());
+// 		display.setCursor(0, 22);
+// 		display.print("Signal:");
+// 		display.print(String(calcWiFiSignalQuality(last_signal_strength)));
+// 		break;
+// 	case 3:
+// 		display.fillScreen(myBLACK);
+// 		display.setTextColor(myWHITE);
+// 		display.setFont(&Font4x5Fixed);
+// 		display.setCursor(0, 4);
+// 		display.print("Device Info");
+// 		display.setCursor(0, 10);
+// 		display.print("ID:");
+// 		display.print(esp_chipid);
+// 		display.setCursor(0, 16);
+// 		display.print("FW:");
+// 		display.print(SOFTWARE_VERSION_SHORT);
+// 		display.setCursor(0, 22);
+// 		display.print("Meas.:");
+// 		display.print(String(count_sends));
+// 		break;
+// 	case 4:
+// 		display.fillScreen(myBLACK);
+// 		display.setTextColor(myWHITE);
+// 		display.setFont(&Font4x5Fixed);
+// 		display.setCursor(0, 0);
+// 		display.print("Position");
+// 		display.setCursor(0, 10);
+// 		display.print("Altitude:");
+// 		display.print(cfg::height_above_sealevel);
+// 		break;
+// 	}
+
+// 	yield();
+// 	next_display_count++;
+// }
+
 
 static void display_values_matrix()
 {
-	float t_value = -128.0;
-	float h_value = -1.0;
-	float p_value = -1.0;
-	String t_sensor, h_sensor, p_sensor;
-
-	String co2_sensor;
-
 	float co2_value = -1.0;
-	double alt_value = -1000.0;
-	uint8_t screen_count = 0;
-	uint8_t screens[6];
-	int line_count = 0;
-	//debug_outln_info(F("output values to matrix..."));
 
 	if (cfg::mhz16_read)
 	{
 		co2_value = last_value_MHZ16;
-		co2_sensor = FPSTR(SENSORS_MHZ16);
 	}
 
 	if (cfg::mhz19_read)
 	{
 		co2_value = last_value_MHZ19;
-		co2_sensor = FPSTR(SENSORS_MHZ19);
 	}
 
-	if (cfg::mhz16_read && cfg::display_measure)
-	{
-		if (cfg_screen_co2)
-			screens[screen_count++] = 0;
-	}
-	if (cfg::mhz19_read && cfg::display_measure)
-	{
-		if (cfg_screen_co2)
-			screens[screen_count++] = 1;
+	if(co2_value == -1.0 && count_sends == 0){
+		//ECRAN ATTENTE+
+		// on remplit array avec uint16_t
+		drawRandomPixel(0, 0, 64, 64);
 	}
 
-	if (cfg::display_wifi_info && cfg::has_wifi)
-	{
-		screens[screen_count++] = 2; // Wifi info
+	if(co2_value != -1.0 && count_sends > 0){
+		int div_entiere = (millis() - time_animation) / LEN_ANIMATION;
+		switch (div_entiere)
+			{
+			case 0:
+				drawImage(0, 0, 64, 64, sprite0);
+				break;
+			case 1:
+				drawImage(0, 0, 64, 64, sprite1);
+				break;
+			case 2:
+				drawImage(0, 0, 64, 64, sprite2);
+				break;
+			case 3:
+				drawImage(0, 0, 64, 64, sprite3);
+				break;
+			case 4:
+				drawImage(0, 0, 64, 64, sprite4);
+				break;
+			case 5:
+				drawImage(0, 0, 64, 64, sprite5);
+				break;
+			case 6:
+				drawImage(0, 0, 64, 64, sprite6);
+				break;
+			case 7:
+				drawImage(0, 0, 64, 64, sprite7);
+				break;
+			case 8:
+				time_animation = millis();
+				break;
+			}
 	}
-	if (cfg::display_device_info)
-	{
-		screens[screen_count++] = 3; // chipID, firmware and count of measurements
-		screens[screen_count++] = 4; // Latitude, longitude, altitude
-	}
 
-	screens[screen_count++] = 5; // Logos
-
-	switch (screens[next_display_count % screen_count])
-	{
-	case 0:
-		if (co2_value != -1.0)
-		{
-		}
-		else
-		{
-			act_milli += 5000;
-		}
-		break;
-	case 1:
-		if (co2_value != -1.0)
-		{
-		}
-		else
-		{
-			act_milli += 5000;
-		}
-		break;
-	case 2:
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(&Font4x5Fixed);
-		display.setTextSize(1);
-		display.setCursor(0, 4);
-		display.print("Wifi Info");
-		display.setCursor(0, 10);
-		display.print("IP:");
-		display.print(WiFi.localIP().toString());
-		display.setCursor(0, 16);
-		display.print("SSID:");
-		display.print(WiFi.SSID());
-		display.setCursor(0, 22);
-		display.print("Signal:");
-		display.print(String(calcWiFiSignalQuality(last_signal_strength)));
-		break;
-	case 3:
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(&Font4x5Fixed);
-		display.setCursor(0, 4);
-		display.print("Device Info");
-		display.setCursor(0, 10);
-		display.print("ID:");
-		display.print(esp_chipid);
-		display.setCursor(0, 16);
-		display.print("FW:");
-		display.print(SOFTWARE_VERSION_SHORT);
-		display.setCursor(0, 22);
-		display.print("Meas.:");
-		display.print(String(count_sends));
-		break;
-	case 4:
-		display.fillScreen(myBLACK);
-		display.setTextColor(myWHITE);
-		display.setFont(&Font4x5Fixed);
-		display.setCursor(0, 0);
-		display.print("Position");
-		display.setCursor(0, 10);
-		display.print("Altitude:");
-		display.print(cfg::height_above_sealevel);
-		break;
-	case 5:
-		if (has_logo && (logos[logo_index + 1] != 0 && logo_index != 5))
-		{
-			logo_index++;
-		}
-		else if (has_logo && (logos[logo_index + 1] == 0) || logo_index == 5)
-		{
-			logo_index = 0;
-		}
-
-		if (logos[logo_index] == cfg_logo_moduleair)
-			drawImage(0, 0, 32, 64, logo_moduleair);
-		if (logos[logo_index] == cfg_logo_aircarto)
-			drawImage(0, 0, 32, 64, logo_aircarto);
-		if (logos[logo_index] == cfg_logo_atmo)
-			drawImage(0, 0, 32, 64, logo_atmo);
-		if (logos[logo_index] == cfg_logo_region)
-			drawImage(0, 0, 32, 64, logo_region);
-		if (logos[logo_index] == cfg_logo_custom1)
-			drawImage(0, 0, 32, 64, logo_custom1);
-		if (logos[logo_index] == cfg_logo_custom2)
-			drawImage(0, 0, 32, 64, logo_custom2);
-
-		break;
+	if(co2_value == -1.0 && count_sends > 0){
+		//erreur
+		display.fillRect(0, 0, 64, 64, myBLACK);
 	}
 
 	yield();
-	next_display_count++;
 }
+
 
 /*****************************************************************
  * Init matrix                                         *
@@ -2819,92 +2708,11 @@ static void init_matrix()
 	display.setColorOrder(RRGGBB); // ATTENTION à changer en fonction de l'écran !!!! Small Matrix (160x80mm) is RRBBGG and Big Matrix (192x96mm) is RRGGBB
 	display_update_enable(true);
 	display.setFont(NULL); //Default font
-
-	for (int i = 1; i < 6; i++)
-	{
-
-		if (i == cfg_logo_moduleair)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_moduleair);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-		if (i == cfg_logo_aircarto)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_aircarto);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-		if (i == cfg_logo_atmo)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_atmo);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-		if (i == cfg_logo_region)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_region);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-		if (i == cfg_logo_custom1)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_custom1);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-		if (i == cfg_logo_custom2)
-		{
-			display.fillScreen(myBLACK); //display.clearDisplay(); produces a flash
-			drawImage(0, 0, 32, 64, logo_custom2);
-			logo_index++;
-			logos[logo_index] = i;
-			delay(5000);
-		}
-	}
-
-	if (logo_index != -1)
-	{
-		has_logo = true;
-		logo_index = -1;
-	}
-	else
-	{
-		has_logo = false;
-	}
 }
-
 
 /*****************************************************************
    Functions
  *****************************************************************/
-
-static void powerOnTestSensors()
-{
-
-	if (cfg::has_matrix)
-	{
-		display.fillScreen(myBLACK);
-		// drawImage(31, 1, 30, 30, engrenage);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL);
-		display.setTextSize(1);
-		display.setCursor(1, 0);
-		display.print(INTL_ACTIVATION);
-		display.setCursor(1, 11);
-		display.print(INTL_PROBES);
-	}
-}
 
 static void logEnabledAPIs()
 {
@@ -3039,38 +2847,6 @@ void setup()
 
 	debug_outln_info(F("\nChipId: "), esp_chipid);
 
-	if (cfg::has_matrix && cfg::has_wifi)
-	{
-		display.fillScreen(myBLACK);
-		// drawImage(36, 6, 20, 27, wifiblue);
-		display.setTextColor(myWHITE);
-		display.setFont(NULL);
-		display.setCursor(1, 0);
-		display.setTextSize(1);
-		display.print(INTL_ACTIVATION);
-		display.setCursor(1, 11);
-		display.print("WiFi");
-		for (int i = 0; i < 5; i++)
-		{
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop1);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop2);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop3);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop4);
-			delay(200);
-			display.fillRect(47, 15, 16, 16, myBLACK);
-			drawImage(47, 15, 16, 16, wifiloop5);
-			delay(200);
-		}
-		display.fillScreen(myBLACK);
-	}
-
 	if (cfg::has_wifi)
 	{
 		setupNetworkTime();
@@ -3084,7 +2860,6 @@ void setup()
 
 	createLoggerConfigs();
 	logEnabledAPIs();
-	powerOnTestSensors();
 
 	delay(50);
 
@@ -3156,7 +2931,8 @@ void loop()
 		}
 	}
 
-	if ((msSince(last_display_millis_matrix) > DISPLAY_UPDATE_INTERVAL_MS) && (cfg::has_matrix))
+	if (cfg::has_matrix)
+	// if ((msSince(last_display_millis_matrix) > DISPLAY_UPDATE_INTERVAL_MS) && (cfg::has_matrix))
 	{
 		display_values_matrix();
 		last_display_millis_matrix = act_milli;
@@ -3280,10 +3056,9 @@ void loop()
 		max_micro = 0;
 		sum_send_time = 0;
 
-
 		starttime = millis(); // store the start time
 		count_sends++;
-
+		time_animation = millis();
 	}
 
 	if (sample_count % 500 == 0)

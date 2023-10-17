@@ -38,6 +38,10 @@
 #define DEBUG_MED_INFO 4
 #define DEBUG_MAX_INFO 5
 
+#define LEN_ANIMATION 200
+
+// #define __RAND_MAX 0xFFFF
+
 /******************************************************************
  * Constants                                                      *
  ******************************************************************/
