@@ -208,9 +208,9 @@ WebServer server(80);
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 #define matrix_width 64
-#define matrix_height 32
+#define matrix_height 64
 uint8_t display_draw_time = 30; //10-50 is usually fine
-PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
+PxMATRIX display(matrix_width, matrix_height, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
 
 extern const uint8_t gamma8[]; //for gamma correction
 
