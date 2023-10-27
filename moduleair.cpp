@@ -78,17 +78,12 @@ String SOFTWARE_VERSION_SHORT(SOFTWARE_VERSION_STR_SHORT);
 
 // includes external libraries
 
-#include "./Fonts/oledfont.h"	  // avoids including the default Arial font, needs to be included before SSD1306.h
-#include "./Fonts/Font4x7Fixed.h" // modified Pour l'affichage des unités
-#include "./Fonts/Font4x5Fixed.h" //pour l'affichage des infos de debug
-
 #define ARDUINOJSON_ENABLE_ARDUINO_STREAM 0
 #define ARDUINOJSON_ENABLE_ARDUINO_PRINT 0
 #define ARDUINOJSON_DECODE_UNICODE 0
 #include <ArduinoJson.h>
 #include <DNSServer.h>
 #include <StreamString.h>
-#include "./configuration.h"
 
 // includes files
 #include "./intl.h"
@@ -141,9 +136,6 @@ namespace cfg
 
 	// (in)active displays
 	bool has_matrix = HAS_MATRIX;
-	bool display_measure = DISPLAY_MEASURE;
-	bool display_wifi_info = DISPLAY_WIFI_INFO;
-	bool display_device_info = DISPLAY_DEVICE_INFO;
 
 	// API AirCarto
 	char host_custom[LEN_HOST_CUSTOM];
@@ -200,6 +192,8 @@ WebServer server(80);
 // include JSON config reader
 #include "./moduleair-cfg.h"
 
+
+
 /*****************************************************************
  * Display definitions                                           *
  *****************************************************************/
@@ -208,34 +202,10 @@ WebServer server(80);
 hw_timer_t *timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 #define matrix_width 64
+//#define matrix_height 32
 #define matrix_height 64
 uint8_t display_draw_time = 30; //10-50 is usually fine
 PxMATRIX display(matrix_width, matrix_height, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
-
-extern const uint8_t gamma8[]; //for gamma correction
-
-struct RGB
-{
-	byte R;
-	byte G;
-	byte B;
-};
-
-struct RGB displayColor
-{
-	0, 0, 0
-};
-
-uint16_t myRED = display.color565(255, 0, 0);
-uint16_t myGREEN = display.color565(0, 255, 0);
-uint16_t myBLUE = display.color565(0, 0, 255);
-uint16_t myCYAN = display.color565(0, 255, 255);
-uint16_t myWHITE = display.color565(255, 255, 255);
-uint16_t myYELLOW = display.color565(255, 255, 0);
-uint16_t myMAGENTA = display.color565(255, 0, 255);
-uint16_t myBLACK = display.color565(0, 0, 0);
-uint16_t myCUSTOM = display.color565(displayColor.R, displayColor.G, displayColor.B);
-uint16_t myCOLORS[8] = {myRED, myGREEN, myCYAN, myWHITE, myYELLOW, myCYAN, myMAGENTA, myBLACK};
 
 void IRAM_ATTR display_updater()
 {
@@ -293,22 +263,17 @@ void drawRandomPixel(int x, int y, int h, int w)
 	}
 }
 
-bool gamma_correction = true; //Gamma correction
-
-void drawCentreString(const String &buf, int x, int y, int offset)
-{
-	int16_t x1, y1;
-	uint16_t w, h;
-	display.getTextBounds(buf, x, y, &x1, &y1, &w, &h); //calc width of new string
-	display.setCursor(((64 - offset) - w) / 2, y);		//si 1 seul chiffre => taille de 2 chiffres !!!
-	display.print(buf);
-}
-
 /*****************************************************************
  * Serial declarations                                           *
  *****************************************************************/
 
 #define serialMHZ (Serial2)
+
+/*****************************************************************
+ * Activation Screen                                          *
+ *****************************************************************/
+
+bool cfg_screen_co2 = true;
 
 /*****************************************************************
  * MH-Z16 declaration                                        *
@@ -330,7 +295,6 @@ unsigned long starttime;
 unsigned long time_end_setup;
 unsigned long time_before_config;
 unsigned long time_animation;
-int prec;
 unsigned long time_point_device_start_ms;
 unsigned long starttime_MHZ16;
 unsigned long starttime_MHZ19;
@@ -342,7 +306,6 @@ unsigned long max_micro = 0;
 
 unsigned long sending_time = 0;
 unsigned long last_update_attempt;
-// int last_update_returncode;
 int last_sendData_returncode;
 
 bool wifi_connection_lost;
@@ -361,7 +324,6 @@ uint16_t mhz19_val_count = 0;
 String last_data_string;
 int last_signal_strength;
 int last_disconnect_reason;
-// int last_connect_reason;
 
 String esp_chipid;
 
@@ -394,16 +356,6 @@ uint8_t count_wifiInfo;
 
 const char data_first_part[] PROGMEM = "{\"software_version\": \"" SOFTWARE_VERSION_STR "\", \"sensordatavalues\":[";
 const char JSON_SENSOR_DATA_VALUES[] PROGMEM = "sensordatavalues";
-
-static String displayGenerateFooter(unsigned int screen_count)
-{
-	String display_footer;
-	for (unsigned int i = 0; i < screen_count; ++i)
-	{
-		display_footer += (i != (next_display_count % screen_count)) ? " . " : " o ";
-	}
-	return display_footer;
-}
 
 /*****************************************************************
  * write config to spiffs                                        *
@@ -551,10 +503,6 @@ static void readConfig(bool oldconfig = false)
 			// SPIFFS.format();
 			rewriteConfig = true;
 		}
-		if (cfg::sending_intervall_ms < READINGTIME_SDS_MS)
-		{
-			cfg::sending_intervall_ms = READINGTIME_SDS_MS;
-		}
 	}
 	else
 	{
@@ -607,32 +555,6 @@ static void createLoggerConfigs()
 	{
 		loggerConfigs[LoggerCustom2].destport = 443;
 	}
-}
-
-/*****************************************************************
- * dew point helper function                                     *
- *****************************************************************/
-static float dew_point(const float temperature, const float humidity)
-{
-	float dew_temp;
-	const float k2 = 17.62;
-	const float k3 = 243.12;
-
-	dew_temp = k3 * (((k2 * temperature) / (k3 + temperature)) + log(humidity / 100.0f)) / (((k2 * k3) / (k3 + temperature)) - log(humidity / 100.0f));
-
-	return dew_temp;
-}
-
-/*****************************************************************
- * Pressure at sea level function                                     *
- *****************************************************************/
-static float pressure_at_sealevel(const float temperature, const float pressure)
-{
-	float pressure_at_sealevel;
-
-	pressure_at_sealevel = pressure * pow(((temperature + 273.15f) / (temperature + 273.15f + (0.0065f * readCorrectionOffset(cfg::height_above_sealevel)))), -5.255f);
-
-	return pressure_at_sealevel;
 }
 
 /*****************************************************************
@@ -931,25 +853,9 @@ static void webserver_config_send_body_get(String &page_content)
 		server.sendContent(page_content);
 	}
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(2));
-
-	page_content += F("<b>" INTL_LOCATION "</b>&nbsp;");
-	page_content += FPSTR(TABLE_TAG_OPEN);
-	add_form_input(page_content, Config_height_above_sealevel, FPSTR(INTL_HEIGHT_ABOVE_SEALEVEL), LEN_HEIGHT_ABOVE_SEALEVEL - 1);
-	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
-
-	// Paginate page after ~ 1500 Bytes
-
-	server.sendContent(page_content);
-	page_content = emptyString;
-
-	page_content = FPSTR(WEB_BR_LF_B);
-	page_content += F(INTL_DISPLAY);
+	page_content += F("<b>" INTL_DISPLAY "</b>&nbsp;");
 	page_content += FPSTR(WEB_B_BR);
 	add_form_checkbox(Config_has_matrix, FPSTR(INTL_MATRIX));
-	add_form_checkbox(Config_display_measure, FPSTR(INTL_DISPLAY_MEASURES));
-	add_form_checkbox(Config_display_wifi_info, FPSTR(INTL_DISPLAY_WIFI_INFO));
-	add_form_checkbox(Config_display_device_info, FPSTR(INTL_DISPLAY_DEVICE_INFO));
-
 	server.sendContent(page_content);
 	page_content = FPSTR(WEB_BR_LF_B);
 	page_content += F(INTL_FIRMWARE "</b>&nbsp;");
@@ -959,20 +865,11 @@ static void webserver_config_send_body_get(String &page_content)
 	add_form_input(page_content, Config_sending_intervall_ms, FPSTR(INTL_MEASUREMENT_INTERVAL), 5);
 	add_form_input(page_content, Config_time_for_wifi_config, FPSTR(INTL_DURATION_ROUTER_MODE), 5);
 	page_content += FPSTR(TABLE_TAG_CLOSE_BR);
-
 	server.sendContent(page_content);
-
-	//ICI
 
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(3));
 
 	page_content += FPSTR("<b>");
-	page_content += FPSTR(INTL_PM_SENSORS);
-	page_content += FPSTR(WEB_B_BR);
-	server.sendContent(page_content);
-	page_content = emptyString;
-
-	page_content += FPSTR(WEB_BR_LF_B);
 	page_content += FPSTR(INTL_CO2_SENSORS);
 	page_content += FPSTR(WEB_B_BR);
 
@@ -984,9 +881,6 @@ static void webserver_config_send_body_get(String &page_content)
 	page_content = emptyString;
 
 	page_content = tmpl(FPSTR(WEB_DIV_PANEL), String(4));
-
-	// //page_content += tmpl(FPSTR(INTL_SEND_TO), F("APIs"));
-	// page_content += tmpl(FPSTR(INTL_SEND_TO), F(""));
 
 	page_content += FPSTR("<b>");
 	page_content += FPSTR(INTL_SEND_TO);
@@ -1875,10 +1769,9 @@ static void wifiConfig()
 	debug_outln_info(FPSTR(DBG_TXT_SEP));
 	debug_outln_info_bool(F("CSV: "), cfg::send2csv);
 	debug_outln_info_bool(F("AirCarto: "), cfg::send2custom);
-	debug_outln_info_bool(F("AtmoSud: "), cfg::send2custom2);
+	debug_outln_info_bool(F("Custom API 2: "), cfg::send2custom2);
 	debug_outln_info(FPSTR(DBG_TXT_SEP));
 	debug_outln_info_bool(F("Matrix: "), cfg::has_matrix);
-	debug_outln_info_bool(F("Display Measures: "), cfg::display_measure);
 	debug_outln_info(F("Debug: "), String(cfg::debug));
 	wificonfig_loop = false; // VOIR ICI
 }
@@ -2382,257 +2275,6 @@ static void fetchSensorMHZ19(String &s)
 	debug_outln_verbose(FPSTR(DBG_TXT_END_READING), FPSTR(sensor_name));
 }
 
-// static void display_values_matrix()
-// {
-// 	float t_value = -128.0;
-// 	float h_value = -1.0;
-// 	float p_value = -1.0;
-// 	String t_sensor, h_sensor, p_sensor;
-
-// 	String co2_sensor;
-
-// 	float co2_value = -1.0;
-// 	double alt_value = -1000.0;
-// 	uint8_t screen_count = 0;
-// 	uint8_t screens[5];
-// 	int line_count = 0;
-// 	//debug_outln_info(F("output values to matrix..."));
-
-// 	if (cfg::mhz16_read)
-// 	{
-// 		co2_value = last_value_MHZ16;
-// 		co2_sensor = FPSTR(SENSORS_MHZ16);
-// 	}
-
-// 	if (cfg::mhz19_read)
-// 	{
-// 		co2_value = last_value_MHZ19;
-// 		co2_sensor = FPSTR(SENSORS_MHZ19);
-// 	}
-
-// 	if (cfg::mhz16_read && cfg::display_measure)
-// 	{
-// 		if (cfg_screen_co2)
-// 			screens[screen_count++] = 0;
-// 	}
-// 	if (cfg::mhz19_read && cfg::display_measure)
-// 	{
-// 		if (cfg_screen_co2)
-// 			screens[screen_count++] = 1;
-// 	}
-
-// 	if (cfg::display_wifi_info && cfg::has_wifi)
-// 	{
-// 		screens[screen_count++] = 2; // Wifi info
-// 	}
-// 	if (cfg::display_device_info)
-// 	{
-// 		screens[screen_count++] = 3; // chipID, firmware and count of measurements
-// 		screens[screen_count++] = 4; // Latitude, longitude, altitude
-// 	}
-
-// 	switch (screens[next_display_count % screen_count])
-// 	{
-// 	case 0:
-// 		if (co2_value != -1.0)
-// 		{
-// 			if (co2_value < 800)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 			if (co2_value >= 800 && co2_value < 1500)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 			if (co2_value >= 1500)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 		}
-// 		else
-// 		{
-// 			act_milli += 5000;
-// 		}
-// 		break;
-// 	case 1:
-// 		if (co2_value != -1.0)
-// 		{
-// 			if (co2_value < 800)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 			if (co2_value >= 800 && co2_value < 1500)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 			if (co2_value >= 1500)
-// 			{
-// 				for (int i = 0; i < 5; i++)
-// 				{
-// 					drawImage(0, 0, 64, 64, sprite0);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite1);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite2);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite3);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite4);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite5);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite6);
-// 					delay(200);
-// 					drawImage(0, 0, 64, 64, sprite7);
-// 					delay(200);
-// 				}
-// 			}
-// 		}
-// 		else
-// 		{
-// 			act_milli += 5000;
-// 		}
-// 		break;
-// 	case 2:
-// 		display.fillScreen(myBLACK);
-// 		display.setTextColor(myWHITE);
-// 		display.setFont(&Font4x5Fixed);
-// 		display.setTextSize(1);
-// 		display.setCursor(0, 4);
-// 		display.print("Wifi Info");
-// 		display.setCursor(0, 10);
-// 		display.print("IP:");
-// 		display.print(WiFi.localIP().toString());
-// 		display.setCursor(0, 16);
-// 		display.print("SSID:");
-// 		display.print(WiFi.SSID());
-// 		display.setCursor(0, 22);
-// 		display.print("Signal:");
-// 		display.print(String(calcWiFiSignalQuality(last_signal_strength)));
-// 		break;
-// 	case 3:
-// 		display.fillScreen(myBLACK);
-// 		display.setTextColor(myWHITE);
-// 		display.setFont(&Font4x5Fixed);
-// 		display.setCursor(0, 4);
-// 		display.print("Device Info");
-// 		display.setCursor(0, 10);
-// 		display.print("ID:");
-// 		display.print(esp_chipid);
-// 		display.setCursor(0, 16);
-// 		display.print("FW:");
-// 		display.print(SOFTWARE_VERSION_SHORT);
-// 		display.setCursor(0, 22);
-// 		display.print("Meas.:");
-// 		display.print(String(count_sends));
-// 		break;
-// 	case 4:
-// 		display.fillScreen(myBLACK);
-// 		display.setTextColor(myWHITE);
-// 		display.setFont(&Font4x5Fixed);
-// 		display.setCursor(0, 0);
-// 		display.print("Position");
-// 		display.setCursor(0, 10);
-// 		display.print("Altitude:");
-// 		display.print(cfg::height_above_sealevel);
-// 		break;
-// 	}
-
-// 	yield();
-// 	next_display_count++;
-// }
-
-
 static void display_values_matrix()
 {
 	float co2_value = -1.0;
@@ -2651,6 +2293,38 @@ static void display_values_matrix()
 		//ECRAN ATTENTE+
 		// on remplit array avec uint16_t
 		drawRandomPixel(0, 0, 64, 64);
+
+		// int div_entiere = (millis() - time_animation) / LEN_ANIMATION;
+		// switch (div_entiere)
+		// 	{
+		// 	case 0:
+		// 		drawImage(0, 0, 64, 64, wait0);
+		// 		break;
+		// 	case 1 ... 67:
+		// 		drawImage(0, 0, 64, 64, wait1);
+		// 		break;
+		// 	case 68 ... 71:
+		// 		drawImage(0, 0, 64, 64, wait2);
+		// 		break;
+		// 	case 72 ... 75:
+		// 		drawImage(0, 0, 64, 64, wait3);
+		// 		break;
+		// 	case 76 ... 79:
+		// 		drawImage(0, 0, 64, 64, wait4);
+		// 		break;
+		// 	case 80 ... 83:
+		// 		drawImage(0, 0, 64, 64, wait5);
+		// 		break;
+		// 	case 84 ... 87:
+		// 		drawImage(0, 0, 64, 64, wait6);
+		// 		break;
+		// 	case 88 ... 154:
+		// 		drawImage(0, 0, 64, 64, wait7);
+		// 		break;
+		// 	default:
+		// 		time_animation = millis();
+		// 		break;
+		// 	}
 	}
 
 	if(co2_value != -1.0 && count_sends > 0){
@@ -2660,36 +2334,35 @@ static void display_values_matrix()
 			case 0:
 				drawImage(0, 0, 64, 64, sprite0);
 				break;
-			case 1:
+			case 1 ... 67:
 				drawImage(0, 0, 64, 64, sprite1);
 				break;
-			case 2:
+			case 68 ... 71:
 				drawImage(0, 0, 64, 64, sprite2);
 				break;
-			case 3:
+			case 72 ... 75:
 				drawImage(0, 0, 64, 64, sprite3);
 				break;
-			case 4:
+			case 76 ... 79:
 				drawImage(0, 0, 64, 64, sprite4);
 				break;
-			case 5:
+			case 80 ... 83:
 				drawImage(0, 0, 64, 64, sprite5);
 				break;
-			case 6:
+			case 84 ... 87:
 				drawImage(0, 0, 64, 64, sprite6);
 				break;
-			case 7:
+			case 88 ... 154:
 				drawImage(0, 0, 64, 64, sprite7);
 				break;
-			case 8:
+			default:
 				time_animation = millis();
-				break;
 			}
 	}
 
 	if(co2_value == -1.0 && count_sends > 0){
 		//erreur
-		display.fillRect(0, 0, 64, 64, myBLACK);
+		display.fillRect(0, 0, 64, 64, display.color565(0, 0, 0));
 	}
 
 	yield();
@@ -2703,6 +2376,7 @@ static void display_values_matrix()
 static void init_matrix()
 {
 	timer = timerBegin(0, 80, true); //init timer once only
+	//display.begin(16);
 	display.begin(32);
 	display.setDriverChip(SHIFT);  // SHIFT ou FM6124 ou FM6126A
 	display.setColorOrder(RRGGBB); // ATTENTION à changer en fonction de l'écran !!!! Small Matrix (160x80mm) is RRBBGG and Big Matrix (192x96mm) is RRGGBB
@@ -2805,6 +2479,17 @@ void setup()
 	Debug.printf("End of Stack is near: %p \r\n", (void *)StackPtrEnd);
 	Debug.printf("Free Stack at start of setup() is:  %d \r\n", (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
 
+	Debug.printf("ESP32 Partition table:\n\n");
+  	Debug.printf("| Type | Sub |  Offset  |   Size   |       Label      |\n");
+  	Debug.printf("| ---- | --- | -------- | -------- | ---------------- |\n");
+	esp_partition_iterator_t pi = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+	if (pi != NULL) {
+		do {
+		const esp_partition_t* p = esp_partition_get(pi);
+		Debug.printf("|  %02x  | %02x  | 0x%06X | 0x%06X | %-16s |\r\n", p->type, p->subtype, p->address, p->size, p->label);
+		} while (pi = (esp_partition_next(pi)));
+	}
+
 	esp_chipid = String((uint16_t)(ESP.getEfuseMac() >> 32), HEX); // for esp32
 	esp_chipid += String((uint32_t)ESP.getEfuseMac(), HEX);
 	esp_chipid.toUpperCase();
@@ -2814,6 +2499,8 @@ void setup()
 	debug_outln_info(F("ModuleAir_Art: " SOFTWARE_VERSION_STR "/"), String(CURRENT_LANG));
 
 	init_config();
+	Debug.print("Actual SPIFFS size: ");
+	Debug.println(SPIFFS.usedBytes());
 
 	spiffs_matrix = cfg::has_matrix; //save the spiffs state on start
 
@@ -2841,7 +2528,7 @@ void setup()
 		{
 			serialMHZ.begin(9600, SERIAL_8N1, CO2_SERIAL_RX, CO2_SERIAL_TX);
 			mhz19.begin(serialMHZ);
-			mhz19.autoCalibration(false);
+			//mhz19.autoCalibration(false);
 		}
 	}
 
@@ -3066,21 +2753,3 @@ void loop()
 		//		Serial.println(ESP.getFreeHeap(),DEC);
 	}
 }
-
-const uint8_t PROGMEM gamma8[] = {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
-	2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5,
-	5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10,
-	10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
-	17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
-	25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
-	37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
-	51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
-	69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
-	90, 92, 93, 95, 96, 98, 99, 101, 102, 104, 105, 107, 109, 110, 112, 114,
-	115, 117, 119, 120, 122, 124, 126, 127, 129, 131, 133, 135, 137, 138, 140, 142,
-	144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175,
-	177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213,
-	215, 218, 220, 223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255};

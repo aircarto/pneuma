@@ -35,14 +35,10 @@ enum ConfigShapeId {
 	Config_fs_ssid,
 	Config_fs_pwd,
 	Config_www_basicauth_enabled,
-	Config_height_above_sealevel,
 	Config_mhz16_read,
 	Config_mhz19_read,
 	Config_send2csv,
 	Config_has_matrix,
-	Config_display_measure,
-	Config_display_wifi_info,
-	Config_display_device_info,
 	Config_debug,
 	Config_sending_intervall_ms,
 	Config_time_for_wifi_config,
@@ -70,14 +66,10 @@ static constexpr char CFG_KEY_WWW_PASSWORD[] PROGMEM = "www_password";
 static constexpr char CFG_KEY_FS_SSID[] PROGMEM = "fs_ssid";
 static constexpr char CFG_KEY_FS_PWD[] PROGMEM = "fs_pwd";
 static constexpr char CFG_KEY_WWW_BASICAUTH_ENABLED[] PROGMEM = "www_basicauth_enabled";
-static constexpr char CFG_KEY_HEIGHT_ABOVE_SEALEVEL[] PROGMEM = "height_above_sealevel";
 static constexpr char CFG_KEY_MHZ16_READ[] PROGMEM = "mhz16_read";
 static constexpr char CFG_KEY_MHZ19_READ[] PROGMEM = "mhz19_read";
 static constexpr char CFG_KEY_SEND2CSV[] PROGMEM = "send2csv";
 static constexpr char CFG_KEY_HAS_MATRIX[] PROGMEM = "has_matrix";
-static constexpr char CFG_KEY_DISPLAY_MEASURE[] PROGMEM = "display_measure";
-static constexpr char CFG_KEY_DISPLAY_WIFI_INFO[] PROGMEM = "display_wifi_info";
-static constexpr char CFG_KEY_DISPLAY_DEVICE_INFO[] PROGMEM = "display_device_info";
 static constexpr char CFG_KEY_DEBUG[] PROGMEM = "debug";
 static constexpr char CFG_KEY_SENDING_INTERVALL_MS[] PROGMEM = "sending_intervall_ms";
 static constexpr char CFG_KEY_TIME_FOR_WIFI_CONFIG[] PROGMEM = "time_for_wifi_config";
@@ -105,14 +97,10 @@ static constexpr ConfigShapeEntry configShape[] PROGMEM = {
 	{ Config_Type_String, sizeof(cfg::fs_ssid)-1, CFG_KEY_FS_SSID, cfg::fs_ssid },
 	{ Config_Type_Password, sizeof(cfg::fs_pwd)-1, CFG_KEY_FS_PWD, cfg::fs_pwd },
 	{ Config_Type_Bool, 0, CFG_KEY_WWW_BASICAUTH_ENABLED, &cfg::www_basicauth_enabled },
-	{ Config_Type_String, sizeof(cfg::height_above_sealevel)-1, CFG_KEY_HEIGHT_ABOVE_SEALEVEL, cfg::height_above_sealevel },
 	{ Config_Type_Bool, 0, CFG_KEY_MHZ16_READ, &cfg::mhz16_read },
 	{ Config_Type_Bool, 0, CFG_KEY_MHZ19_READ, &cfg::mhz19_read },
 	{ Config_Type_Bool, 0, CFG_KEY_SEND2CSV, &cfg::send2csv },
 	{ Config_Type_Bool, 0, CFG_KEY_HAS_MATRIX, &cfg::has_matrix },
-	{ Config_Type_Bool, 0, CFG_KEY_DISPLAY_MEASURE, &cfg::display_measure },
-	{ Config_Type_Bool, 0, CFG_KEY_DISPLAY_WIFI_INFO, &cfg::display_wifi_info },
-	{ Config_Type_Bool, 0, CFG_KEY_DISPLAY_DEVICE_INFO, &cfg::display_device_info },
 	{ Config_Type_UInt, 0, CFG_KEY_DEBUG, &cfg::debug },
 	{ Config_Type_Time, 0, CFG_KEY_SENDING_INTERVALL_MS, &cfg::sending_intervall_ms },
 	{ Config_Type_Time, 0, CFG_KEY_TIME_FOR_WIFI_CONFIG, &cfg::time_for_wifi_config },

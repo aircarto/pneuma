@@ -154,4 +154,4 @@ const char INTL_ACTIVATION[] = "Activating";
 const char INTL_PROBES[] = "sensors";
 
 #include "./aircarto-logo-common.h"
-#include "./sprites.h"
+// #include "./sprites_ms.h"

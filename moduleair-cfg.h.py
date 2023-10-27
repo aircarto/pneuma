@@ -10,14 +10,10 @@ Password	www_password
 String		fs_ssid
 Password	fs_pwd
 Bool		www_basicauth_enabled
-String		height_above_sealevel
 Bool		mhz16_read
 Bool		mhz19_read
 Bool		send2csv
 Bool		has_matrix
-Bool		display_measure
-Bool		display_wifi_info
-Bool		display_device_info
 UInt		debug
 Time		sending_intervall_ms
 Time		time_for_wifi_config
