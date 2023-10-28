@@ -192,8 +192,6 @@ WebServer server(80);
 // include JSON config reader
 #include "./moduleair-cfg.h"
 
-
-
 /*****************************************************************
  * Display definitions                                           *
  *****************************************************************/
@@ -234,7 +232,7 @@ void display_update_enable(bool is_enable)
 	}
 }
 
-void drawImage(int x, int y, int h, int w, uint16_t image[])
+void drawImage(int x, int y, int h, int w, const uint16_t image[])
 {
 	int imageHeight = h;
 	int imageWidth = w;
@@ -1746,7 +1744,6 @@ static void wifiConfig()
 	// 10 minutes timeout for wifi config
 	last_page_load = millis();
 
-
 	while ((millis() - last_page_load) < cfg::time_for_wifi_config + 500)
 	{
 		dnsServer.processNextRequest();
@@ -2289,85 +2286,160 @@ static void display_values_matrix()
 		co2_value = last_value_MHZ19;
 	}
 
-	if(co2_value == -1.0 && count_sends == 0){
+	if (co2_value == -1.0 && count_sends == 0)
+	{
 		//ECRAN ATTENTE+
 		// on remplit array avec uint16_t
-		drawRandomPixel(0, 0, 64, 64);
+		// drawRandomPixel(0, 0, 64, 64);
 
-		// int div_entiere = (millis() - time_animation) / LEN_ANIMATION;
-		// switch (div_entiere)
-		// 	{
-		// 	case 0:
-		// 		drawImage(0, 0, 64, 64, wait0);
-		// 		break;
-		// 	case 1 ... 67:
-		// 		drawImage(0, 0, 64, 64, wait1);
-		// 		break;
-		// 	case 68 ... 71:
-		// 		drawImage(0, 0, 64, 64, wait2);
-		// 		break;
-		// 	case 72 ... 75:
-		// 		drawImage(0, 0, 64, 64, wait3);
-		// 		break;
-		// 	case 76 ... 79:
-		// 		drawImage(0, 0, 64, 64, wait4);
-		// 		break;
-		// 	case 80 ... 83:
-		// 		drawImage(0, 0, 64, 64, wait5);
-		// 		break;
-		// 	case 84 ... 87:
-		// 		drawImage(0, 0, 64, 64, wait6);
-		// 		break;
-		// 	case 88 ... 154:
-		// 		drawImage(0, 0, 64, 64, wait7);
-		// 		break;
-		// 	default:
-		// 		time_animation = millis();
-		// 		break;
-		// 	}
-	}
-
-	if(co2_value != -1.0 && count_sends > 0){
 		int div_entiere = (millis() - time_animation) / LEN_ANIMATION;
 		switch (div_entiere)
+		{
+		case 0:
+			drawImage(0, 0, 64, 64, wait0);
+			break;
+		case 1 ... 67:
+			drawImage(0, 0, 64, 64, wait1);
+			break;
+		case 68 ... 71:
+			drawImage(0, 0, 64, 64, wait2);
+			break;
+		case 72 ... 75:
+			drawImage(0, 0, 64, 64, wait3);
+			break;
+		case 76 ... 79:
+			drawImage(0, 0, 64, 64, wait4);
+			break;
+		case 80 ... 83:
+			drawImage(0, 0, 64, 64, wait5);
+			break;
+		case 84 ... 87:
+			drawImage(0, 0, 64, 64, wait6);
+			break;
+		case 88 ... 154:
+			drawImage(0, 0, 64, 64, wait7);
+			break;
+		default:
+			time_animation = millis();
+			break;
+		}
+	}
+
+	if (co2_value != -1.0 && count_sends > 0)
+	{
+		int div_entiere = (millis() - time_animation) / LEN_ANIMATION;
+
+		if (co2_value <= 800)
+		{
+
+			switch (div_entiere)
 			{
 			case 0:
-				drawImage(0, 0, 64, 64, sprite0);
+				drawImage(0, 0, 64, 64, anim_1_0);
 				break;
 			case 1 ... 67:
-				drawImage(0, 0, 64, 64, sprite1);
+				drawImage(0, 0, 64, 64, anim_1_1);
 				break;
 			case 68 ... 71:
-				drawImage(0, 0, 64, 64, sprite2);
+				drawImage(0, 0, 64, 64, anim_1_2);
 				break;
 			case 72 ... 75:
-				drawImage(0, 0, 64, 64, sprite3);
+				drawImage(0, 0, 64, 64, anim_1_3);
 				break;
 			case 76 ... 79:
-				drawImage(0, 0, 64, 64, sprite4);
+				drawImage(0, 0, 64, 64, anim_1_4);
 				break;
 			case 80 ... 83:
-				drawImage(0, 0, 64, 64, sprite5);
+				drawImage(0, 0, 64, 64, anim_1_5);
 				break;
 			case 84 ... 87:
-				drawImage(0, 0, 64, 64, sprite6);
+				drawImage(0, 0, 64, 64, anim_1_6);
 				break;
 			case 88 ... 154:
-				drawImage(0, 0, 64, 64, sprite7);
+				drawImage(0, 0, 64, 64, anim_1_7);
 				break;
 			default:
 				time_animation = millis();
 			}
+		}
+
+		if (co2_value > 800 && co2_value <= 1500)
+		{
+
+			switch (div_entiere)
+			{
+			case 0:
+				drawImage(0, 0, 64, 64, anim_2_0);
+				break;
+			case 1 ... 67:
+				drawImage(0, 0, 64, 64, anim_2_1);
+				break;
+			case 68 ... 71:
+				drawImage(0, 0, 64, 64, anim_2_2);
+				break;
+			case 72 ... 75:
+				drawImage(0, 0, 64, 64, anim_2_3);
+				break;
+			case 76 ... 79:
+				drawImage(0, 0, 64, 64, anim_2_4);
+				break;
+			case 80 ... 83:
+				drawImage(0, 0, 64, 64, anim_2_5);
+				break;
+			case 84 ... 87:
+				drawImage(0, 0, 64, 64, anim_2_6);
+				break;
+			case 88 ... 154:
+				drawImage(0, 0, 64, 64, anim_2_7);
+				break;
+			default:
+				time_animation = millis();
+			}
+		}
+
+		if (co2_value > 1500)
+		{
+
+			switch (div_entiere)
+			{
+			case 0:
+				drawImage(0, 0, 64, 64, anim_3_0);
+				break;
+			case 1 ... 67:
+				drawImage(0, 0, 64, 64, anim_3_1);
+				break;
+			case 68 ... 71:
+				drawImage(0, 0, 64, 64, anim_3_2);
+				break;
+			case 72 ... 75:
+				drawImage(0, 0, 64, 64, anim_3_3);
+				break;
+			case 76 ... 79:
+				drawImage(0, 0, 64, 64, anim_3_4);
+				break;
+			case 80 ... 83:
+				drawImage(0, 0, 64, 64, anim_3_5);
+				break;
+			case 84 ... 87:
+				drawImage(0, 0, 64, 64, anim_3_6);
+				break;
+			case 88 ... 154:
+				drawImage(0, 0, 64, 64, anim_3_7);
+				break;
+			default:
+				time_animation = millis();
+			}
+		}
 	}
 
-	if(co2_value == -1.0 && count_sends > 0){
+	if (co2_value == -1.0 && count_sends > 0)
+	{
 		//erreur
 		display.fillRect(0, 0, 64, 64, display.color565(0, 0, 0));
 	}
 
 	yield();
 }
-
 
 /*****************************************************************
  * Init matrix                                         *
@@ -2480,13 +2552,15 @@ void setup()
 	Debug.printf("Free Stack at start of setup() is:  %d \r\n", (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
 
 	Debug.printf("ESP32 Partition table:\n\n");
-  	Debug.printf("| Type | Sub |  Offset  |   Size   |       Label      |\n");
-  	Debug.printf("| ---- | --- | -------- | -------- | ---------------- |\n");
+	Debug.printf("| Type | Sub |  Offset  |   Size   |       Label      |\n");
+	Debug.printf("| ---- | --- | -------- | -------- | ---------------- |\n");
 	esp_partition_iterator_t pi = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
-	if (pi != NULL) {
-		do {
-		const esp_partition_t* p = esp_partition_get(pi);
-		Debug.printf("|  %02x  | %02x  | 0x%06X | 0x%06X | %-16s |\r\n", p->type, p->subtype, p->address, p->size, p->label);
+	if (pi != NULL)
+	{
+		do
+		{
+			const esp_partition_t *p = esp_partition_get(pi);
+			Debug.printf("|  %02x  | %02x  | 0x%06X | 0x%06X | %-16s |\r\n", p->type, p->subtype, p->address, p->size, p->label);
 		} while (pi = (esp_partition_next(pi)));
 	}
 
