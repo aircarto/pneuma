@@ -2381,29 +2381,77 @@ static void display_values_matrix()
 
 			switch (div_entiere)
 			{
-			case 0:
-				drawImage(0, 0, 64, 64, anim_1_0);
+			case 0 ... 42:
+				drawImage(0, 0, 64, 64, anim_24_frames_0);
 				break;
-			case 1 ... 67:
-				drawImage(0, 0, 64, 64, anim_1_1);
+			case 43 ... 85:
+				drawImage(0, 0, 64, 64, anim_24_frames_1);
 				break;
-			case 68 ... 71:
-				drawImage(0, 0, 64, 64, anim_1_2);
+			case 86 ... 128:
+				drawImage(0, 0, 64, 64, anim_24_frames_2);
 				break;
-			case 72 ... 75:
-				drawImage(0, 0, 64, 64, anim_1_3);
+			case 129 ... 171:
+				drawImage(0, 0, 64, 64, anim_24_frames_3);
 				break;
-			case 76 ... 79:
-				drawImage(0, 0, 64, 64, anim_1_4);
+			case 172 ... 214:
+				drawImage(0, 0, 64, 64, anim_24_frames_4);
 				break;
-			case 80 ... 83:
-				drawImage(0, 0, 64, 64, anim_1_5);
+			case 215 ... 257:
+				drawImage(0, 0, 64, 64, anim_24_frames_5);
 				break;
-			case 84 ... 87:
-				drawImage(0, 0, 64, 64, anim_1_6);
+			case 258 ... 300:
+				drawImage(0, 0, 64, 64, anim_24_frames_6);
 				break;
-			case 88 ... 154:
-				drawImage(0, 0, 64, 64, anim_1_7);
+			case 301 ... 343:
+				drawImage(0, 0, 64, 64, anim_24_frames_7);
+				break;
+			case 344 ... 386:
+				drawImage(0, 0, 64, 64, anim_24_frames_8);
+				break;
+			case 387 ... 429:
+				drawImage(0, 0, 64, 64, anim_24_frames_9);
+				break;
+			case 430 ... 472:
+				drawImage(0, 0, 64, 64, anim_24_frames_10);
+				break;
+			case 473 ... 515:
+				drawImage(0, 0, 64, 64, anim_24_frames_11);
+				break;
+			case 516 ... 558:
+				drawImage(0, 0, 64, 64, anim_24_frames_12);
+				break;
+			case 559 ... 601:
+				drawImage(0, 0, 64, 64, anim_24_frames_13);
+				break;
+			case 602 ... 644:
+				drawImage(0, 0, 64, 64, anim_24_frames_14);
+				break;
+			case 645 ... 687:
+				drawImage(0, 0, 64, 64, anim_24_frames_15);
+				break;
+			case 688 ... 730:
+				drawImage(0, 0, 64, 64, anim_24_frames_16);
+				break;
+			case 731 ... 773:
+				drawImage(0, 0, 64, 64, anim_24_frames_17);
+				break;
+			case 774 ... 816:
+				drawImage(0, 0, 64, 64, anim_24_frames_18);
+				break;
+			case 817 ... 859:
+				drawImage(0, 0, 64, 64, anim_24_frames_19);
+				break;
+			case 860 ... 902:
+				drawImage(0, 0, 64, 64, anim_24_frames_20);
+				break;
+			case 903 ... 945:
+				drawImage(0, 0, 64, 64, anim_24_frames_21);
+				break;
+			case 946 ... 988:
+				drawImage(0, 0, 64, 64, anim_24_frames_22);
+				break;
+			case 989 ... 1031:
+				drawImage(0, 0, 64, 64, anim_24_frames_23);
 				break;
 			default:
 				time_animation = millis();
@@ -2415,29 +2463,77 @@ static void display_values_matrix()
 
 			switch (div_entiere)
 			{
-			case 0:
-				drawImage(0, 0, 64, 64, anim_2_0);
+			case 0 ... 42:
+				drawImage(0, 0, 64, 64, anim_24_frames_0);
 				break;
-			case 1 ... 67:
-				drawImage(0, 0, 64, 64, anim_2_1);
+			case 43 ... 85:
+				drawImage(0, 0, 64, 64, anim_24_frames_1);
 				break;
-			case 68 ... 71:
-				drawImage(0, 0, 64, 64, anim_2_2);
+			case 86 ... 128:
+				drawImage(0, 0, 64, 64, anim_24_frames_2);
 				break;
-			case 72 ... 75:
-				drawImage(0, 0, 64, 64, anim_2_3);
+			case 129 ... 171:
+				drawImage(0, 0, 64, 64, anim_24_frames_3);
 				break;
-			case 76 ... 79:
-				drawImage(0, 0, 64, 64, anim_2_4);
+			case 172 ... 214:
+				drawImage(0, 0, 64, 64, anim_24_frames_4);
 				break;
-			case 80 ... 83:
-				drawImage(0, 0, 64, 64, anim_2_5);
+			case 215 ... 257:
+				drawImage(0, 0, 64, 64, anim_24_frames_5);
 				break;
-			case 84 ... 87:
-				drawImage(0, 0, 64, 64, anim_2_6);
+			case 258 ... 300:
+				drawImage(0, 0, 64, 64, anim_24_frames_6);
 				break;
-			case 88 ... 154:
-				drawImage(0, 0, 64, 64, anim_2_7);
+			case 301 ... 343:
+				drawImage(0, 0, 64, 64, anim_24_frames_7);
+				break;
+			case 344 ... 386:
+				drawImage(0, 0, 64, 64, anim_24_frames_8);
+				break;
+			case 387 ... 429:
+				drawImage(0, 0, 64, 64, anim_24_frames_9);
+				break;
+			case 430 ... 472:
+				drawImage(0, 0, 64, 64, anim_24_frames_10);
+				break;
+			case 473 ... 515:
+				drawImage(0, 0, 64, 64, anim_24_frames_11);
+				break;
+			case 516 ... 558:
+				drawImage(0, 0, 64, 64, anim_24_frames_12);
+				break;
+			case 559 ... 601:
+				drawImage(0, 0, 64, 64, anim_24_frames_13);
+				break;
+			case 602 ... 644:
+				drawImage(0, 0, 64, 64, anim_24_frames_14);
+				break;
+			case 645 ... 687:
+				drawImage(0, 0, 64, 64, anim_24_frames_15);
+				break;
+			case 688 ... 730:
+				drawImage(0, 0, 64, 64, anim_24_frames_16);
+				break;
+			case 731 ... 773:
+				drawImage(0, 0, 64, 64, anim_24_frames_17);
+				break;
+			case 774 ... 816:
+				drawImage(0, 0, 64, 64, anim_24_frames_18);
+				break;
+			case 817 ... 859:
+				drawImage(0, 0, 64, 64, anim_24_frames_19);
+				break;
+			case 860 ... 902:
+				drawImage(0, 0, 64, 64, anim_24_frames_20);
+				break;
+			case 903 ... 945:
+				drawImage(0, 0, 64, 64, anim_24_frames_21);
+				break;
+			case 946 ... 988:
+				drawImage(0, 0, 64, 64, anim_24_frames_22);
+				break;
+			case 989 ... 1031:
+				drawImage(0, 0, 64, 64, anim_24_frames_23);
 				break;
 			default:
 				time_animation = millis();
@@ -2449,29 +2545,77 @@ static void display_values_matrix()
 
 			switch (div_entiere)
 			{
-			case 0:
-				drawImage(0, 0, 64, 64, anim_3_0);
+			case 0 ... 42:
+				drawImage(0, 0, 64, 64, anim_24_frames_0);
 				break;
-			case 1 ... 67:
-				drawImage(0, 0, 64, 64, anim_3_1);
+			case 43 ... 85:
+				drawImage(0, 0, 64, 64, anim_24_frames_1);
 				break;
-			case 68 ... 71:
-				drawImage(0, 0, 64, 64, anim_3_2);
+			case 86 ... 128:
+				drawImage(0, 0, 64, 64, anim_24_frames_2);
 				break;
-			case 72 ... 75:
-				drawImage(0, 0, 64, 64, anim_3_3);
+			case 129 ... 171:
+				drawImage(0, 0, 64, 64, anim_24_frames_3);
 				break;
-			case 76 ... 79:
-				drawImage(0, 0, 64, 64, anim_3_4);
+			case 172 ... 214:
+				drawImage(0, 0, 64, 64, anim_24_frames_4);
 				break;
-			case 80 ... 83:
-				drawImage(0, 0, 64, 64, anim_3_5);
+			case 215 ... 257:
+				drawImage(0, 0, 64, 64, anim_24_frames_5);
 				break;
-			case 84 ... 87:
-				drawImage(0, 0, 64, 64, anim_3_6);
+			case 258 ... 300:
+				drawImage(0, 0, 64, 64, anim_24_frames_6);
 				break;
-			case 88 ... 154:
-				drawImage(0, 0, 64, 64, anim_3_7);
+			case 301 ... 343:
+				drawImage(0, 0, 64, 64, anim_24_frames_7);
+				break;
+			case 344 ... 386:
+				drawImage(0, 0, 64, 64, anim_24_frames_8);
+				break;
+			case 387 ... 429:
+				drawImage(0, 0, 64, 64, anim_24_frames_9);
+				break;
+			case 430 ... 472:
+				drawImage(0, 0, 64, 64, anim_24_frames_10);
+				break;
+			case 473 ... 515:
+				drawImage(0, 0, 64, 64, anim_24_frames_11);
+				break;
+			case 516 ... 558:
+				drawImage(0, 0, 64, 64, anim_24_frames_12);
+				break;
+			case 559 ... 601:
+				drawImage(0, 0, 64, 64, anim_24_frames_13);
+				break;
+			case 602 ... 644:
+				drawImage(0, 0, 64, 64, anim_24_frames_14);
+				break;
+			case 645 ... 687:
+				drawImage(0, 0, 64, 64, anim_24_frames_15);
+				break;
+			case 688 ... 730:
+				drawImage(0, 0, 64, 64, anim_24_frames_16);
+				break;
+			case 731 ... 773:
+				drawImage(0, 0, 64, 64, anim_24_frames_17);
+				break;
+			case 774 ... 816:
+				drawImage(0, 0, 64, 64, anim_24_frames_18);
+				break;
+			case 817 ... 859:
+				drawImage(0, 0, 64, 64, anim_24_frames_19);
+				break;
+			case 860 ... 902:
+				drawImage(0, 0, 64, 64, anim_24_frames_20);
+				break;
+			case 903 ... 945:
+				drawImage(0, 0, 64, 64, anim_24_frames_21);
+				break;
+			case 946 ... 988:
+				drawImage(0, 0, 64, 64, anim_24_frames_22);
+				break;
+			case 989 ... 1031:
+				drawImage(0, 0, 64, 64, anim_24_frames_23);
 				break;
 			default:
 				time_animation = millis();

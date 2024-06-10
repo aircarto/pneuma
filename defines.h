@@ -28,7 +28,9 @@
 #define DEBUG_MED_INFO 4
 #define DEBUG_MAX_INFO 5
 
-#define LEN_ANIMATION 30
+#define LEN_ANIMATION 41
+
+// 1000 / 24 = 41.67
 
 /******************************************************************
  * Constants                                                      *
