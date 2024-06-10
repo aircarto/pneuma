@@ -9,6 +9,7 @@ String SOFTWARE_VERSION_SHORT(SOFTWARE_VERSION_STR_SHORT);
 #include <Arduino.h>
 #include "PxMatrix.h"
 #include <SPI.h>
+#include <FastLED.h>
 
 /*****************************************************************
  * IMPORTANT                                          *
@@ -136,6 +137,8 @@ namespace cfg
 
 	// (in)active displays
 	bool has_matrix = HAS_MATRIX;
+	bool has_leds = HAS_LEDS;
+	unsigned brightness = BRIGHTNESS;
 
 	// API AirCarto
 	char host_custom[LEN_HOST_CUSTOM];
@@ -195,6 +198,28 @@ WebServer server(80);
 /*****************************************************************
  * Display definitions                                           *
  *****************************************************************/
+
+//For the LEDS
+
+CRGB colorLED_empty = CRGB(0, 0, 0);
+CRGB colorLED_wifi = CRGB(0, 0, 255);
+CRGB colorLED_start = CRGB(255, 255, 255);
+CRGB colorLED_red = CRGB(255, 0, 0);
+CRGB colorLED_orange = CRGB(255, 128, 0);
+CRGB colorLED_yellow = CRGB(255, 255, 0);
+CRGB colorLED_green = CRGB(0, 255, 0);
+
+CRGB leds[LEDS_NB]; //DOIT ETRE UNE CONSTANTE => PAS CONFIGURABLE
+
+// static void drawpicture(uint8_t img[][3])
+// {
+// 	for (unsigned int i = 0; i < LEDS_NB; ++i)
+// 	{
+// 		leds[i].r = img[i][0];
+// 		leds[i].g = img[i][1];
+// 		leds[i].b = img[i][2];
+// 	}
+// }
 
 //For the matrix
 hw_timer_t *timer = NULL;
@@ -854,6 +879,8 @@ static void webserver_config_send_body_get(String &page_content)
 	page_content += F("<b>" INTL_DISPLAY "</b>&nbsp;");
 	page_content += FPSTR(WEB_B_BR);
 	add_form_checkbox(Config_has_matrix, FPSTR(INTL_MATRIX));
+	add_form_checkbox(Config_has_leds, FPSTR(INTL_LEDS));
+	add_form_input(page_content, Config_brightness, FPSTR(INTL_BRIGHTNESS), 3);
 	server.sendContent(page_content);
 	page_content = FPSTR(WEB_BR_LF_B);
 	page_content += F(INTL_FIRMWARE "</b>&nbsp;");
@@ -989,6 +1016,12 @@ static void sensor_restart()
 	SPIFFS.end();
 
 #pragma GCC diagnostic pop
+
+	if (cfg::has_leds)
+	{
+		fill_solid(leds, LEDS_NB, colorLED_empty);
+		FastLED.show();
+	}
 
 	debug_outln_info(F("Restart."));
 	delay(500);
@@ -1681,7 +1714,6 @@ static int selectChannelForAp()
 
 static void wifiConfig()
 {
-
 	if (cfg::has_matrix)
 	{
 		display_update_enable(false);
@@ -2069,6 +2101,13 @@ static unsigned long sendData(const LoggerEntry logger, const String &data, cons
 		{
 			loggerConfigs[logger].errors++;
 			last_sendData_returncode = result;
+
+		if(cfg::has_leds)
+		{
+			fill_solid(leds, LEDS_NB, colorLED_red);
+			FastLED.show();
+		}
+
 		}
 
 		return millis() - start_send;
@@ -2133,6 +2172,14 @@ static unsigned long sendData(const LoggerEntry logger, const String &data, cons
 		{
 			loggerConfigs[logger].errors++;
 			last_sendData_returncode = result;
+
+
+		if(cfg::has_leds)
+		{
+			fill_solid(leds, LEDS_NB, colorLED_red);
+			FastLED.show();
+		}
+
 		}
 
 		return millis() - start_send;
@@ -2606,6 +2653,14 @@ void setup()
 		}
 	}
 
+
+	if (cfg::has_leds)
+	{
+		debug_outln_info(F("init FastLED"));
+		FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds, LEDS_NB); //swap R and G !  //ATTENTION AU TYPE DE LED
+		FastLED.setBrightness(cfg::brightness);				   //max=255
+	}
+
 	debug_outln_info(F("\nChipId: "), esp_chipid);
 
 	if (cfg::has_wifi)
@@ -2710,6 +2765,12 @@ void loop()
 	if (send_now && cfg::sending_intervall_ms >= 120000)
 	{
 
+		if(cfg::has_leds)
+		{
+				fill_solid(leds, LEDS_NB, colorLED_empty);
+				FastLED.show();
+		}
+
 		void *SpActual = NULL;
 		Debug.printf("Free Stack at send_now is: %d \r\n", (uint32_t)&SpActual - (uint32_t)StackPtrEnd);
 
@@ -2803,7 +2864,7 @@ void loop()
 			debug_outln_info(emptyString);
 		}
 
-		// only do a restart after finishing sending (Wifi). Befor Lora to avoid conflicts with the LMIC
+		// only do a restart after finishing sending (Wifi). 
 		if (msSince(time_point_device_start_ms) > DURATION_BEFORE_FORCED_RESTART_MS)
 		{
 			sensor_restart();
@@ -2816,6 +2877,15 @@ void loop()
 		min_micro = 1000000000;
 		max_micro = 0;
 		sum_send_time = 0;
+
+		if(cfg::has_leds)
+		{
+		if (cfg::has_wifi && wifi_connection_lost) 
+			{
+							fill_solid(leds, LEDS_NB, colorLED_red);
+							FastLED.show();
+			}
+		}
 
 		starttime = millis(); // store the start time
 		count_sends++;

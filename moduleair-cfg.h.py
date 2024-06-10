@@ -14,6 +14,8 @@ Bool		mhz16_read
 Bool		mhz19_read
 Bool		send2csv
 Bool		has_matrix
+Bool		has_leds
+UInt        brightness
 UInt		debug
 Time		sending_intervall_ms
 Time		time_for_wifi_config

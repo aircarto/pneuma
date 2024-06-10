@@ -34,6 +34,8 @@ const char INTL_MORE_SETTINGS[] PROGMEM = "Autres paramètres";
 const char INTL_SCREENS[] PROGMEM = "Écrans";
 const char INTL_SSD1306[] PROGMEM = "OLED SSD1306";
 const char INTL_MATRIX[] PROGMEM = "Matrice RGB 64x32";
+const char INTL_LEDS[] PROGMEM = "LEDs WS2812B";
+const char INTL_BRIGHTNESS[] PROGMEM = "Luminosité";
 const char INTL_DISPLAY_MEASURES[] PROGMEM = "Afficher les mesures des capteurs";
 const char INTL_DISPLAY_FORECAST[] PROGMEM = "Afficher les prévisions Atmosud";
 const char INTL_DISPLAY_WIFI_INFO[] PROGMEM = "Afficher les informations wifi";
@@ -154,6 +156,5 @@ const char INTL_ACTIVATION[] = "Activation";
 const char INTL_PROBES[] = "des sondes";
 
 #include "./aircarto-logo-common.h"
-//#include "./sprites_ms.h"
 #include "./sprites_pneuma.h"
 

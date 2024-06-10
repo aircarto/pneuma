@@ -39,6 +39,8 @@ enum ConfigShapeId {
 	Config_mhz19_read,
 	Config_send2csv,
 	Config_has_matrix,
+	Config_has_leds,
+	Config_brightness,
 	Config_debug,
 	Config_sending_intervall_ms,
 	Config_time_for_wifi_config,
@@ -70,6 +72,8 @@ static constexpr char CFG_KEY_MHZ16_READ[] PROGMEM = "mhz16_read";
 static constexpr char CFG_KEY_MHZ19_READ[] PROGMEM = "mhz19_read";
 static constexpr char CFG_KEY_SEND2CSV[] PROGMEM = "send2csv";
 static constexpr char CFG_KEY_HAS_MATRIX[] PROGMEM = "has_matrix";
+static constexpr char CFG_KEY_HAS_LEDS[] PROGMEM = "has_leds";
+static constexpr char CFG_KEY_BRIGHTNESS[] PROGMEM = "brightness";
 static constexpr char CFG_KEY_DEBUG[] PROGMEM = "debug";
 static constexpr char CFG_KEY_SENDING_INTERVALL_MS[] PROGMEM = "sending_intervall_ms";
 static constexpr char CFG_KEY_TIME_FOR_WIFI_CONFIG[] PROGMEM = "time_for_wifi_config";
@@ -101,6 +105,8 @@ static constexpr ConfigShapeEntry configShape[] PROGMEM = {
 	{ Config_Type_Bool, 0, CFG_KEY_MHZ19_READ, &cfg::mhz19_read },
 	{ Config_Type_Bool, 0, CFG_KEY_SEND2CSV, &cfg::send2csv },
 	{ Config_Type_Bool, 0, CFG_KEY_HAS_MATRIX, &cfg::has_matrix },
+	{ Config_Type_Bool, 0, CFG_KEY_HAS_LEDS, &cfg::has_leds },
+	{ Config_Type_UInt, 0, CFG_KEY_BRIGHTNESS, &cfg::brightness },
 	{ Config_Type_UInt, 0, CFG_KEY_DEBUG, &cfg::debug },
 	{ Config_Type_Time, 0, CFG_KEY_SENDING_INTERVALL_MS, &cfg::sending_intervall_ms },
 	{ Config_Type_Time, 0, CFG_KEY_TIME_FOR_WIFI_CONFIG, &cfg::time_for_wifi_config },
