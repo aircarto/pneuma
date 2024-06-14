@@ -2703,7 +2703,9 @@ static void display_values_matrix()
 static void init_matrix()
 {
 	timer = timerBegin(0, 80, true); //init timer once only
-	display.begin(16);
+	display.begin(32);
+	//display.setScanPattern(ZAGGIZ);
+	//display.setMuxDelay(1,1,1,1,1);
 	display.setDriverChip(SHIFT);  // SHIFT ou FM6124 ou FM6126A
 	display.setColorOrder(RRGGBB); // ATTENTION à changer en fonction de l'écran !!!! Small Matrix (160x80mm) is RRBBGG and Big Matrix (192x96mm) is RRGGBB
 	display_update_enable(true);
